@@ -10,10 +10,35 @@ function [v_pi,q_pi] = MDP_SilverEx(P,R,policy,y)
 % Outputs:  v - State-Values of the environment
 %           q - Action-Values of the environment
        %C1 C2 C3 FB Sleep
-P_pi = P.*policy;
+if(numel(size(P)) ~= 3)
+    error('MyComponent:incorrectType',...
+        'Error. \nProbability Matrix is not 3-D');
+end
+if(size(P,1) ~= size(P,2))
+    error('MyComponent:incorrectType',...
+        ['Error. \nThe number of rows and colums are not equal'...
+        '\nRows: %i =/= %i: Cols'],size(P,1),size(P,2));
+end
+if(size(policy) ~= size(R))
+     error('MyComponent:incorrectType',...
+        ['Error. \nThe size of R must be equal to the policy'...
+        '\nR: %i,%i =/= %i,%i: Policy'],size(R,1),size(R,2),...
+        size(policy,1),size(policy,2));
+end
+
+P_pi = zeros(size(P,1),size(P,2));
+
+for i = 1:size(P,3)
+    P_pi = P_pi+policy(:,i).*P(:,:,i);
+end
 
 R_pi = sum(R.*policy,2);
 
-v_pi = (eye(size(P_pi,1))-y*P_pi)\R_pi;
-q_pi = 0;
+v_pi = (eye(size(R_pi,1))-.9999*P_pi)\R_pi;
+
+q_pi = R;
+for i = 1:size(P,2)
+    Ptemp = reshape(P(:,i,:),size(P,1),size(P,3));
+    q_pi = q_pi+y*Ptemp.*v_pi(i);
+end
 end
